@@ -27,5 +27,5 @@ private[sbt] trait VaadinKeys {
 
   val vaadinAddonMappings = TaskKey[Seq[(File, String)]]("Defines the mappings from a addon jar file to a path used in 'packageVaadinDirectoryZip'. The paths are added to the 'Vaadin-Addon' entry in the zip's manifest.")
 
-  val compileWidgetSetsCacheDir=settingKey[Option[File]]("GWT persistentunitcachedir (if this key is set, the GWT unitcache dir will not be deleted")
+  val compileWidgetSetsCacheDir = settingKey[Option[sbt.File]]("GWT persistentunitcachedir (if this key is set, the GWT unitcache dir will not be deleted")
 }

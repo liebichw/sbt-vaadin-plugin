@@ -1,7 +1,7 @@
 package org.vaadin.sbt.tasks
 
 import _root_.java.io.{ FileNotFoundException, IOException }
-import org.vaadin.sbt.VaadinPlugin.{compileVaadinWidgetsets, compileWidgetSetsCacheDir, vaadinOptions, vaadinWidgetsets}
+import org.vaadin.sbt.VaadinPlugin.{ compileVaadinWidgetsets, compileWidgetSetsCacheDir, vaadinOptions, vaadinWidgetsets }
 
 import org.vaadin.sbt.util.ForkUtil._
 import org.vaadin.sbt.util.ProjectUtil._
@@ -13,18 +13,19 @@ import sbt._
  */
 object CompileWidgetsetsTask {
 
-  val compileWidgetsetsTask: Def.Initialize[Task[Seq[File]]] = (
+  private val tuple: (SettingKey[File], TaskKey[Classpath], SettingKey[Seq[File]], SettingKey[Seq[String]], SettingKey[Seq[String]], TaskKey[Seq[String]], SettingKey[File], SettingKey[ResolvedProject], TaskKey[Boolean], TaskKey[State], TaskKey[TaskStreams], SettingKey[Option[File]]) = (
     classDirectory in Compile, dependencyClasspath in Compile,
     resourceDirectories in Compile, vaadinWidgetsets in compileVaadinWidgetsets, vaadinOptions in compileVaadinWidgetsets,
     javaOptions in compileVaadinWidgetsets, target in compileVaadinWidgetsets, thisProject, skip in compileVaadinWidgetsets,
-    state, streams) map widgetsetCompiler
+    state, streams, compileWidgetSetsCacheDir in compileVaadinWidgetsets)
+  val compileWidgetsetsTask: Def.Initialize[Task[Seq[File]]] = tuple map widgetsetCompiler
 
   val compileWidgetsetsInResourceGeneratorsTask: Def.Initialize[Task[Seq[File]]] = (
     classDirectory in Compile, dependencyClasspath in Compile,
     resourceDirectories in Compile, vaadinWidgetsets in compileVaadinWidgetsets, vaadinOptions in compileVaadinWidgetsets,
     javaOptions in compileVaadinWidgetsets, target in compileVaadinWidgetsets, thisProject,
     skip in compileVaadinWidgetsets in resourceGenerators,
-    state, streams) map widgetsetCompiler
+    state, streams, compileWidgetSetsCacheDir in compileVaadinWidgetsets) map widgetsetCompiler
 
   private def addIfNotInArgs(args: Seq[String], param: String, value: String) =
     if (!args.contains(param)) Seq(param, value) else Nil
@@ -40,7 +41,8 @@ object CompileWidgetsetsTask {
     p: ResolvedProject,
     skip: Boolean,
     state: State,
-    s: TaskStreams): Seq[File] = {
+    s: TaskStreams,
+    cwsCacheDir: Option[File]): Seq[File] = {
 
     implicit val log = s.log
 
@@ -52,7 +54,7 @@ object CompileWidgetsetsTask {
       IO.createDirectory(target)
 
       val (keepGwtUnitCache, tmpDir) = {
-        compileWidgetSetsCacheDir.value match {
+        cwsCacheDir match {
           case Some(d) => (true, d)
           case None => (false, IO.createTemporaryDirectory)
         }
@@ -95,8 +97,7 @@ object CompileWidgetsetsTask {
           log.debug(s"Deleting persistent unit cache dir ${tmpDir.absolutePath}")
           try {
             deleteRecursive(tmpDir)
-          }
-          catch {
+          } catch {
             case e: IOException => log.warn(s"Deleting ${tmpDir.absolutePath} failed with msg ${e.getLocalizedMessage}")
           }
         }
