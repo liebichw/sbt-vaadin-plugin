@@ -1,7 +1,7 @@
 package org.vaadin.sbt.tasks
 
 import _root_.java.io.{ FileNotFoundException, IOException }
-import org.vaadin.sbt.VaadinPlugin.{compileVaadinWidgetsets, compileWidgetSetsCacheDir, vaadinOptions, vaadinWidgetsets}
+import org.vaadin.sbt.VaadinPlugin.{ compileVaadinWidgetsets, compileWidgetSetsCacheDir, vaadinOptions, vaadinWidgetsets }
 
 import org.vaadin.sbt.util.ForkUtil._
 import org.vaadin.sbt.util.ProjectUtil._
@@ -52,7 +52,11 @@ object CompileWidgetsetsTask {
       IO.createDirectory(target)
 
       val (keepGwtUnitCache, tmpDir) = {
-        compileWidgetSetsCacheDir.value match {
+
+        val value: Option[File] = Def.setting {
+          compileWidgetSetsCacheDir.value
+        }.value
+        value match {
           case Some(d) => (true, d)
           case None => (false, IO.createTemporaryDirectory)
         }
@@ -95,8 +99,7 @@ object CompileWidgetsetsTask {
           log.debug(s"Deleting persistent unit cache dir ${tmpDir.absolutePath}")
           try {
             deleteRecursive(tmpDir)
-          }
-          catch {
+          } catch {
             case e: IOException => log.warn(s"Deleting ${tmpDir.absolutePath} failed with msg ${e.getLocalizedMessage}")
           }
         }
