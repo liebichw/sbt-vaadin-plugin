@@ -1,8 +1,8 @@
 package org.vaadin.sbt.tasks
 
 import _root_.java.io.{ FileNotFoundException, IOException }
+import org.vaadin.sbt.VaadinPlugin.{compileVaadinWidgetsets, compileWidgetSetsCacheDir, vaadinOptions, vaadinWidgetsets}
 
-import org.vaadin.sbt.VaadinPlugin.{ compileVaadinWidgetsets, vaadinOptions, vaadinWidgetsets }
 import org.vaadin.sbt.util.ForkUtil._
 import org.vaadin.sbt.util.ProjectUtil._
 import sbt.Keys._
@@ -51,7 +51,12 @@ object CompileWidgetsetsTask {
 
       IO.createDirectory(target)
 
-      val tmpDir: File = IO.createTemporaryDirectory
+      val (keepGwtUnitCache, tmpDir) = {
+        compileWidgetSetsCacheDir.value match {
+          case Some(d) => (true, d)
+          case None => (false, IO.createTemporaryDirectory)
+        }
+      }
 
       try {
         val jvmArgs = Seq("-Dgwt.persistentunitcachedir=" + tmpDir.absolutePath) ++ jvmArguments
@@ -84,11 +89,16 @@ object CompileWidgetsetsTask {
           }
         }
       } finally {
-        log.debug(s"Deleting persistent unit cache dir ${tmpDir.absolutePath}")
-        try {
-          deleteRecursive(tmpDir)
-        } catch {
-          case e: IOException => log.warn(s"Deleting ${tmpDir.absolutePath} failed with msg ${e.getLocalizedMessage}")
+        if (keepGwtUnitCache) {
+          log.info(s"Will not delete persistent GWT unit cache ${tmpDir.absolutePath}")
+        } else {
+          log.debug(s"Deleting persistent unit cache dir ${tmpDir.absolutePath}")
+          try {
+            deleteRecursive(tmpDir)
+          }
+          catch {
+            case e: IOException => log.warn(s"Deleting ${tmpDir.absolutePath} failed with msg ${e.getLocalizedMessage}")
+          }
         }
       }
     }

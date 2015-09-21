@@ -1,8 +1,8 @@
 package org.vaadin.sbt
 
-import sbt._
-import sbt.Keys._
 import org.vaadin.sbt.tasks._
+import sbt.Keys._
+import sbt._
 
 object VaadinPlugin extends Plugin with VaadinKeys {
 
@@ -14,7 +14,7 @@ object VaadinPlugin extends Plugin with VaadinKeys {
     target in compileVaadinWidgetsets := (target in Compile).value / "webapp" / "VAADIN" / "widgetsets",
     vaadinOptions in compileVaadinWidgetsets := Nil,
     javaOptions in compileVaadinWidgetsets := Nil,
-
+    compileWidgetSetsCacheDir := None,
     vaadinDevMode <<= DevModeTask.devModeTask,
     vaadinWidgetsets in vaadinDevMode := (vaadinWidgetsets in compileVaadinWidgetsets).value,
     target in vaadinDevMode := (target in compileVaadinWidgetsets).value,
